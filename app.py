@@ -9,7 +9,7 @@ import gradio as gr
 try:
     model = joblib.load("loan_prediction_model.pkl")
 except Exception as e:
-    print("Model Loading Error:", e)
+    print(f"Model Loading Error: {e}")
     model = None
 
 
@@ -45,8 +45,7 @@ def predict_loan_status(
         commercial_assets_value = float(commercial_assets_value)
         luxury_assets_value = float(luxury_assets_value)
         bank_asset_value = float(bank_asset_value)
-
-    except:
+    except (ValueError, TypeError):
         return "❌ Please enter valid values."
 
     numeric_values = [
@@ -64,11 +63,10 @@ def predict_loan_status(
     if any(v < 0 for v in numeric_values):
         return "❌ Negative values are not allowed."
 
-    if cibil_score < 300 or cibil_score > 900:
+    if not (300 <= cibil_score <= 900):
         return "❌ CIBIL Score must be between 300 and 900."
 
-    # IMPORTANT:
-    # Feature names are exactly the same as the training dataset
+    # DataFrame with same feature names used during training
     input_df = pd.DataFrame([[
         no_of_dependents,
         education,
@@ -98,34 +96,27 @@ def predict_loan_status(
     try:
         prediction = model.predict(input_df)[0]
 
+        confidence_text = ""
         try:
             probability = model.predict_proba(input_df)[0]
             confidence = round(max(probability) * 100, 2)
+            confidence_text = f"\n\nConfidence: {confidence}%"
         except:
-            confidence = None
+            pass
 
         if prediction == 1:
-            result = "✅ LOAN APPROVED"
-        else:
-            result = "❌ LOAN REJECTED"
+            return f"""✅ LOAN APPROVED
 
-        if confidence:
-            return f"""
-🏦 Loan Prediction Result
-
-{result}
-
-Confidence : {confidence} %
+The applicant is eligible for the loan.{confidence_text}
 """
         else:
-            return f"""
-🏦 Loan Prediction Result
+            return f"""❌ LOAN REJECTED
 
-{result}
+The applicant is not eligible for the loan.{confidence_text}
 """
 
     except Exception as e:
-        return f"Prediction Error:\n{e}"
+        return f"❌ Prediction Error\n\n{e}"
 
 
 # ===========================
@@ -135,9 +126,9 @@ Confidence : {confidence} %
 description = """
 # 🏦 Loan Approval Prediction System
 
-Enter the applicant details below and click **Predict**.
+Fill in all applicant details and click **Predict**.
 
-The prediction is performed using a trained **Random Forest Classifier**.
+This prediction is made using a trained **Random Forest Classifier**.
 """
 
 interface = gr.Interface(
@@ -147,48 +138,35 @@ interface = gr.Interface(
         gr.Number(label="Number of Dependents"),
 
         gr.Dropdown(
-            choices=[("Graduate",1),("Not Graduate",0)],
+            choices=[("Graduate", 1), ("Not Graduate", 0)],
             value=1,
             label="Education"
         ),
 
         gr.Dropdown(
-            choices=[("Yes",1),("No",0)],
+            choices=[("Yes", 1), ("No", 0)],
             value=0,
             label="Self Employed"
         ),
 
         gr.Number(label="Annual Income"),
-
         gr.Number(label="Loan Amount"),
-
         gr.Number(label="Loan Term"),
-
-        gr.Number(label="CIBIL Score"),
-
+        gr.Number(label="CIBIL Score (300-900)"),
         gr.Number(label="Residential Assets Value"),
-
         gr.Number(label="Commercial Assets Value"),
-
         gr.Number(label="Luxury Assets Value"),
-
         gr.Number(label="Bank Asset Value"),
     ],
 
     outputs=gr.Textbox(
-        label="Prediction",
-        lines=7
+        label="Prediction Result",
+        lines=6
     ),
 
     title="🏦 Loan Approval Prediction",
-
-    description=description,
-
-    theme=gr.themes.Soft(),
-
-    allow_flagging="never"
+    description=description
 )
-
 
 if __name__ == "__main__":
     interface.launch(
