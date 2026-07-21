@@ -1,5 +1,5 @@
 gradio==5.38.2
-pandas
-numpy
-joblib
+joblib==1.5.1
 scikit-learn==1.6.1
+numpy==2.3.2
+pandas==2.3.1
