@@ -1,5 +1,5 @@
 gradio
-joblib
-scikit-learn
-numpy
 pandas
+numpy
+scikit-learn
+joblib
