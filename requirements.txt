@@ -1,5 +1,5 @@
-gradio
-joblib
+gradio==5.38.2
 pandas
 numpy
+joblib
 scikit-learn==1.6.1
