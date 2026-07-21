@@ -1,30 +1,49 @@
-# app.py
-
-# --- CHANGED BLOCK START ---
-import gradio as gr
+from flask import Flask, request, jsonify
 import joblib
-import spaces
+import pandas as pd
 
-# We load the model once when the app starts
-deployed_lr = joblib.load('my_first_ml_model.pkl')
+app = Flask(__name__)
 
-# --- ZERO-GPU DECORATOR AND PREDICTION LOGIC ---
-@spaces.GPU
-def predict_rent(size_of_prop):
-    # The model expects a 2D array: [[size]]
-    prediction = deployed_lr.predict([[size_of_prop]])
-    # Extract the single prediction value and format it
-    return f"Estimated Rent: {prediction[0]:.2f}"
+# Load model
+model = joblib.load("loan_prediction_model.pkl")
 
-# Create the web interface
-interface = gr.Interface(
-    fn=predict_rent,
-    inputs=gr.Number(label="Please Enter the Size of Your Property for rent"),
-    outputs=gr.Text(label="Predicted Rent"),
-    title="Property Rent Predictor",
-    description="Enter the property size to get a rent estimate powered by Machine Learning."
-)
+
+@app.route("/")
+def home():
+    return """
+    <h2>Loan Prediction API is Running 🚀</h2>
+    <p>Send a POST request to <b>/predict</b></p>
+    """
+
+
+@app.route("/predict", methods=["POST"])
+def predict():
+    try:
+        data = request.get_json()
+
+        df = pd.DataFrame([{
+            " no_of_dependents": data["no_of_dependents"],
+            " education": data["education"],
+            " self_employed": data["self_employed"],
+            " income_annum": data["income_annum"],
+            " loan_amount": data["loan_amount"],
+            " loan_term": data["loan_term"],
+            " cibil_score": data["cibil_score"],
+            " residential_assets_value": data["residential_assets_value"],
+            " commercial_assets_value": data["commercial_assets_value"],
+            " luxury_assets_value": data["luxury_assets_value"],
+            " bank_asset_value": data["bank_asset_value"]
+        }])
+
+        prediction = model.predict(df)[0]
+
+        return jsonify({
+            "prediction": str(prediction)
+        })
+
+    except Exception as e:
+        return jsonify({"error": str(e)})
+
 
 if __name__ == "__main__":
-    interface.launch()
-# --- CHANGED BLOCK END ---
+    app.run(host="0.0.0.0", port=5000)
