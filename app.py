@@ -122,10 +122,10 @@ Enter the applicant's financial and personal details below to run the assessment
 
 developer_info = """
 ### About the Developer
-**Created by:** Aleesha
+**Created by:** Deepak
 
-* **LinkedIn:** [Connect with me](https://www.linkedin.com/in/aleesha-8117a1320)
-* **GitHub:** [Check out my projects](https://github.com/aleesha-16)
+* **LinkedIn:** [Connect with me]
+* **GitHub:** [Check out my projects]
 
 ---
 ### 🛠️ Tools & Technologies Used
